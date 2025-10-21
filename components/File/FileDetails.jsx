@@ -1,210 +1,154 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { fetchVersions, uploadNewVersion } from '@/lib/api';
+import { useState } from 'react';
+import { useFile } from '@/lib/hooks';
+import { fileAPI } from '@/lib/apiClient';
+import FileViewer from './FileViewer';
+import FileVersions from './FileVersions';
+import UploadVersionForm from './UploadVersionForm';
 
-export default function FileDetails({ fileId, onVersionUpload }) {
-  const [versions, setVersions] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+export default function FileDetails({ repoId, fileId, onVersionUpload }) {
+  const { file, versions, loading, error, refetch } = useFile(repoId, fileId);
+  const [activeTab, setActiveTab] = useState('content'); // 'content' or 'versions'
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [uploadData, setUploadData] = useState({ version: '', uploader: '', notes: '' });
-  const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    if (!fileId) {
-      setVersions([]);
-      return;
-    }
-    setIsLoading(true);
-    fetchVersions(fileId).then((data) => {
-      setVersions(data);
-      setIsLoading(false);
-    });
-  }, [fileId]);
-
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    setIsUploading(true);
-    
-    const res = await uploadNewVersion(fileId, uploadData);
-    setIsUploading(false);
-    
-    if (res.success) {
-      setUploadData({ version: '', uploader: '', notes: '' });
-      setShowUploadForm(false);
-      onVersionUpload();
-    }
-  };
-
-  if (!fileId) {
+  if (!fileId || !repoId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-muted/30">
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-zinc-900">
         <div className="text-center">
-          <svg className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <svg className="w-12 h-12 text-zinc-200 dark:text-zinc-800 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="text-sm font-medium text-foreground mb-1">No file selected</h3>
-          <p className="text-xs text-muted-foreground">Select a file to view versions</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-600">Select a file from the explorer</p>
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-zinc-900">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-xs text-red-600 dark:text-red-400">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-zinc-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading file...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleVersionUploadSuccess = () => {
+    setShowUploadForm(false);
+    refetch();
+    if (onVersionUpload) {
+      onVersionUpload();
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col bg-background">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Version History</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {versions.length} {versions.length === 1 ? 'version' : 'versions'}
-            </p>
+    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <svg className="w-4 h-4 text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div>
+              <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                {file?.filename || 'Loading...'}
+              </h2>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                {versions.length} {versions.length === 1 ? 'version' : 'versions'}
+                {file?.file_size && ` • ${(file.file_size / 1024).toFixed(2)} KB`}
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowUploadForm(!showUploadForm)}
-            className="px-3 py-1.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-all flex items-center gap-2"
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             New Version
           </button>
         </div>
+
+        {/* Tabs */}
+        <div className="flex gap-0.5 bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded">
+          <button
+            onClick={() => setActiveTab('content')}
+            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition ${
+              activeTab === 'content'
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+            }`}
+          >
+            <span className="flex items-center justify-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Content
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('versions')}
+            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition ${
+              activeTab === 'versions'
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+            }`}
+          >
+            <span className="flex items-center justify-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              History ({versions.length})
+            </span>
+          </button>
+        </div>
       </div>
 
+      {/* Upload Form */}
       {showUploadForm && (
-        <div className="p-4 border-b border-border bg-muted/30">
-          <form onSubmit={handleUpload} className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
-                Version Number
-              </label>
-              <input
-                type="text"
-                required
-                value={uploadData.version}
-                onChange={(e) => setUploadData({ ...uploadData, version: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                placeholder="e.g., 1.2.0"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
-                Uploader Name
-              </label>
-              <input
-                type="text"
-                required
-                value={uploadData.uploader}
-                onChange={(e) => setUploadData({ ...uploadData, uploader: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">
-                Release Notes (Optional)
-              </label>
-              <textarea
-                value={uploadData.notes}
-                onChange={(e) => setUploadData({ ...uploadData, notes: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none"
-                placeholder="Describe the changes..."
-                rows={2}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={isUploading}
-                className="flex-1 py-2 px-4 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {isUploading ? 'Uploading...' : 'Upload Version'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowUploadForm(false)}
-                className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-muted transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+        <UploadVersionForm
+          repoId={repoId}
+          fileId={fileId}
+          onSuccess={handleVersionUploadSuccess}
+          onCancel={() => setShowUploadForm(false)}
+        />
       )}
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-muted/50 rounded-lg animate-pulse" />
-            ))}
-          </div>
-        ) : versions.length === 0 ? (
-          <div className="text-center py-12">
-            <svg className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-sm text-muted-foreground">No versions yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Upload the first version to get started</p>
-          </div>
+      {/* Content Area */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {activeTab === 'content' ? (
+          <FileViewer
+            content={file?.content_text || file?.content}
+            filename={file?.filename}
+          />
         ) : (
-          <div className="space-y-3">
-            {versions.map((version, index) => (
-              <div
-                key={version.id}
-                className="p-4 border border-border rounded-lg hover:border-border-hover transition-all bg-background group"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-semibold text-foreground">
-                          Version {version.version}
-                        </h4>
-                        {index === 0 && (
-                          <span className="px-2 py-0.5 bg-success/10 text-success text-xs font-medium rounded-full">
-                            Latest
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        by {version.uploader} • {version.uploadedAt}
-                      </p>
-                    </div>
-                  </div>
-                  <button className="p-1.5 rounded-lg hover:bg-muted transition-colors opacity-0 group-hover:opacity-100">
-                    <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
-                  </button>
-                </div>
-                {version.notes && (
-                  <p className="text-sm text-muted-foreground mt-2 pl-13">
-                    {version.notes}
-                  </p>
-                )}
-                <div className="flex gap-2 mt-3 pl-13">
-                  <button className="text-xs text-accent hover:text-accent-hover font-medium transition-colors">
-                    Download
-                  </button>
-                  <span className="text-muted-foreground">•</span>
-                  <button className="text-xs text-accent hover:text-accent-hover font-medium transition-colors">
-                    Compare
-                  </button>
-                  <span className="text-muted-foreground">•</span>
-                  <button className="text-xs text-accent hover:text-accent-hover font-medium transition-colors">
-                    Restore
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <FileVersions
+            repoId={repoId}
+            fileId={fileId}
+            filename={file?.filename}
+            versions={versions}
+            onRefresh={refetch}
+          />
         )}
       </div>
     </div>

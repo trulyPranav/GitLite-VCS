@@ -1,12 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { storeAuthTokens } from '@/lib/auth';
+import { authAPI } from '@/lib/apiClient';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,21 +19,30 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Prepare request body based on signup or signin
+      const requestBody = {
+        email,
+        password,
+      };
+
+      // Add optional fields for signup
+      if (isSignup) {
+        if (username) requestBody.username = username;
+        if (fullName) requestBody.full_name = fullName;
+      }
+
+      // Call API using the centralized client
+      const data = await authAPI.login(requestBody);
+
+      // Store authentication tokens and user data
+      if (data.session && data.user) {
+        storeAuthTokens(data.session, data.user);
+      }
       
-      // API integration point
-      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ username, password }),
-      // });
-      
-      // if (!res.ok) throw new Error('Invalid credentials');
-      
+      // Redirect to dashboard
       window.location.href = '/dashboard';
     } catch (err) {
-      setError('Invalid username or password');
+      setError(err.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }
@@ -53,20 +67,54 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
-              Username
+            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+              Email
             </label>
             <input
-              id="username"
-              type="text"
-              autoComplete="username"
+              id="email"
+              type="email"
+              autoComplete="email"
               required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-              placeholder="Enter your username"
+              placeholder="Enter your email"
             />
           </div>
+
+          {isSignup && (
+            <>
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
+                  Username (Optional)
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  placeholder="Enter your username"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-foreground mb-2">
+                  Full Name (Optional)
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  autoComplete="name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  placeholder="Enter your full name"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
@@ -101,18 +149,22 @@ export default function LoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing in...
+                {isSignup ? 'Signing up...' : 'Signing in...'}
               </span>
             ) : (
-              'Sign in'
+              isSignup ? 'Sign up' : 'Sign in'
             )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <a href="#" className="text-sm text-accent hover:text-accent-hover transition-colors">
-            Forgot your password?
-          </a>
+          <button
+            type="button"
+            onClick={() => setIsSignup(!isSignup)}
+            className="text-sm text-accent hover:text-accent-hover transition-colors"
+          >
+            {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+          </button>
         </div>
       </div>
     </div>
