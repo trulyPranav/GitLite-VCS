@@ -13,7 +13,7 @@
   --success: #10b981;
 }
 
-@theme inline {
+:root[data-theme="inline"] {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

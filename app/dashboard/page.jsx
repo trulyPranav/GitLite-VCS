@@ -9,11 +9,12 @@ import Header from '@/components/Layout/Header';
 export default function DashboardPage() {
   const [selectedRepoId, setSelectedRepoId] = useState(null);
   const [selectedFileId, setSelectedFileId] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSelectRepo = (repoId) => {
     setSelectedRepoId(repoId);
     setSelectedFileId(null);
+    setIsSidebarOpen(false);
   };
 
   const handleSelectFile = (fileId) => {
@@ -28,7 +29,7 @@ export default function DashboardPage() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header 
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         isSidebarOpen={isSidebarOpen}
       />
       
@@ -37,6 +38,7 @@ export default function DashboardPage() {
           selectedRepoId={selectedRepoId}
           onSelectRepo={handleSelectRepo}
           isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         <div className="flex-1 flex overflow-hidden">
