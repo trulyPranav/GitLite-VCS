@@ -322,6 +322,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👥 Authors
 
 - **Pranav** - *Initial work* - [@trulyPranav](https://github.com/trulyPranav)
+- **Rigzin** - *Auth SetUps* - [@Rigzin00](https://github.com/Rigzin00)
 
 ---
 
@@ -331,16 +332,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Tailwind CSS for the utility-first CSS approach
 - React team for the powerful UI library
 - All contributors who help improve this project
-
----
-
-## 📞 Support
-
-If you have any questions or need help:
-
-- 📧 Email: support@gitlite.dev
-- 🐛 [Issue Tracker](https://github.com/trulyPranav/GitLite-VCS/issues)
-- 💬 [Discussions](https://github.com/trulyPranav/GitLite-VCS/discussions)
 
 ---
 
