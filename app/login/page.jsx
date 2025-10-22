@@ -190,26 +190,35 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setErrorMsg('');
     setIsLoading(true);
 
     try {
+      // Prepare request body based on signup or signin
       const requestBody = {
         email,
         password,
       };
 
+      // Add optional fields for signup
       if (isSignup) {
         if (username) requestBody.username = username;
         if (fullName) requestBody.full_name = fullName;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Form submitted:', requestBody);
-      alert('Login successful! (Demo mode)');
+      // Call API using the centralized client
+      const data = await authAPI.login(requestBody);
       
-    } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      // Store authentication tokens and user data
+      if (data.session && data.user) {
+        storeAuthTokens(data.session, data.user);
+      }
+
+      // Redirect to dashboard
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrorMsg(error.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
