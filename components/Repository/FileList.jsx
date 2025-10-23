@@ -4,8 +4,8 @@ import { useFiles } from '@/lib/hooks';
 import FileItem from './FileItem';
 import CreateFileButton from './CreateFileButton';
 
-export default function FileList({ repoId, selectedFileId, onSelectFile }) {
-  const { files, loading, error } = useFiles(repoId);
+export default function FileList({ repoId, selectedFileId, onSelectFile, branch = null }) {
+  const { files, loading, error } = useFiles(repoId, branch);
 
   if (!repoId) {
     return (
@@ -40,7 +40,7 @@ export default function FileList({ repoId, selectedFileId, onSelectFile }) {
           <h3 className="font-semibold dark:text-white">Files</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">{files.length}</span>
         </div>
-        <CreateFileButton repoId={repoId} />
+  <CreateFileButton repoId={repoId} branch={branch} />
       </div>
       
       {files.length === 0 ? (

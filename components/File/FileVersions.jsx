@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { fileAPI } from '@/lib/apiClient';
 import DiffViewer from './DiffViewer';
 
-export default function FileVersions({ repoId, fileId, filename, versions, onRefresh }) {
+export default function FileVersions({ repoId, fileId, filename, versions, onRefresh, branch = null }) {
   const [downloading, setDownloading] = useState(null);
   const [comparing, setComparing] = useState(null);
   const [diffData, setDiffData] = useState(null);
@@ -102,6 +102,22 @@ export default function FileVersions({ repoId, fileId, filename, versions, onRef
 
   return (
     <div className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-900/50 min-h-0">
+      {/* Branch Context Info */}
+      {branch && (
+        <div className="p-4 pb-0">
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 mb-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                Showing version(s) for branch: <code className="font-mono font-semibold bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded">{branch}</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="p-4 space-y-3">
         {versions.map((version, index) => (
           <div

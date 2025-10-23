@@ -1,15 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { fileAPI } from '@/lib/apiClient';
 
-export default function UploadVersionForm({ repoId, fileId, onSuccess, onCancel }) {
+export default function UploadVersionForm({ repoId, fileId, onSuccess, onCancel, branch }) {
   const [uploadMode, setUploadMode] = useState('text'); // 'text' or 'file'
   const [textContent, setTextContent] = useState('');
   const [commitMessage, setCommitMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [error, setError] = useState('');
+
+  // Fetch current file content when component mounts
+  useEffect(() => {
+    const fetchCurrentContent = async () => {
+      if (!repoId || !fileId) return;
+      
+      setIsLoadingContent(true);
+      try {
+        const fileData = await fileAPI.getById(repoId, fileId, { branch });
+        if (fileData.content_text || fileData.content) {
+          setTextContent(fileData.content_text || fileData.content || '');
+        }
+      } catch (err) {
+        console.error('Failed to load current file content:', err);
+        // Don't show error, just leave content empty
+      } finally {
+        setIsLoadingContent(false);
+      }
+    };
+
+    fetchCurrentContent();
+  }, [repoId, fileId, branch]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -42,11 +65,22 @@ export default function UploadVersionForm({ repoId, fileId, onSuccess, onCancel 
         return;
       }
 
-      // Use PUT endpoint to create new version
-      await fileAPI.update(repoId, fileId, {
-        content_text: textContent,
-        commit_message: commitMessage.trim() || 'Update file',
-      });
+      if (uploadMode === 'file') {
+        // Use binary upload endpoint
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('commit_message', commitMessage.trim() || 'Upload file');
+        // Optional: include text content as fallback
+        if (textContent) formData.append('content_text', textContent);
+
+        await fileAPI.upload(repoId, formData, { branch });
+      } else {
+        // Use PUT endpoint to create new version (text)
+        await fileAPI.update(repoId, fileId, {
+          content_text: textContent,
+          commit_message: commitMessage.trim() || 'Update file',
+        }, { branch });
+      }
       
       // Reset form
       setTextContent('');
@@ -147,14 +181,23 @@ export default function UploadVersionForm({ repoId, fileId, onSuccess, onCancel 
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
               File Content *
             </label>
-            <textarea
-              required
-              value={textContent}
-              onChange={(e) => setTextContent(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none font-mono"
-              placeholder="Enter file content..."
-              rows={12}
-            />
+            {isLoadingContent ? (
+              <div className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center" style={{ minHeight: '288px' }}>
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading current content...</p>
+                </div>
+              </div>
+            ) : (
+              <textarea
+                required
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none font-mono"
+                placeholder="Enter file content..."
+                rows={12}
+              />
+            )}
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {textContent.length} characters, {textContent.split('\n').length} lines
             </p>
@@ -193,7 +236,7 @@ export default function UploadVersionForm({ repoId, fileId, onSuccess, onCancel 
           </button>
           <button
             type="submit"
-            disabled={isUploading || (!textContent.trim() && uploadMode === 'text')}
+            disabled={isUploading || isLoadingContent || (!textContent.trim() && uploadMode === 'text')}
             className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
           >
             {isUploading ? (
@@ -203,6 +246,14 @@ export default function UploadVersionForm({ repoId, fileId, onSuccess, onCancel 
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>Uploading...</span>
+              </>
+            ) : isLoadingContent ? (
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading...</span>
               </>
             ) : (
               <>

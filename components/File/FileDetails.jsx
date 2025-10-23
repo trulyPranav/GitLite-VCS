@@ -6,9 +6,10 @@ import { fileAPI } from '@/lib/apiClient';
 import FileViewer from './FileViewer';
 import FileVersions from './FileVersions';
 import UploadVersionForm from './UploadVersionForm';
+import DeleteFileButton from './DeleteFileButton';
 
-export default function FileDetails({ repoId, fileId, onVersionUpload }) {
-  const { file, versions, loading, error, refetch } = useFile(repoId, fileId);
+export default function FileDetails({ repoId, fileId, onVersionUpload, branch = null, onFileDeleted }) {
+  const { file, versions, loading, error, refetch } = useFile(repoId, fileId, branch);
   const [activeTab, setActiveTab] = useState('content'); // 'content' or 'versions'
   const [showUploadForm, setShowUploadForm] = useState(false);
 
@@ -26,15 +27,30 @@ export default function FileDetails({ repoId, fileId, onVersionUpload }) {
   }
 
   if (error) {
+    const isFileNotInBranch = error.message?.includes('not found in branch');
+    
     return (
       <div className="flex-1 flex items-center justify-center bg-white dark:bg-zinc-900">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div className="text-center max-w-md">
+          <div className="w-12 h-12 rounded-full bg-yellow-50 dark:bg-yellow-950/30 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-xs text-red-600 dark:text-red-400">{error.message}</p>
+          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">
+            {isFileNotInBranch ? 'File Not in This Branch' : 'Error Loading File'}
+          </p>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-4">
+            {isFileNotInBranch 
+              ? `This file doesn't exist in the "${branch}" branch. It may have been added in a different branch or deleted.`
+              : error.message
+            }
+          </p>
+          {isFileNotInBranch && branch && (
+            <p className="text-xs text-indigo-600 dark:text-indigo-400">
+              💡 Try selecting a different file or switching to another branch
+            </p>
+          )}
         </div>
       </div>
     );
@@ -59,6 +75,13 @@ export default function FileDetails({ repoId, fileId, onVersionUpload }) {
     }
   };
 
+  const handleFileDeleted = (deletedFileId, filename) => {
+    console.log(`[FileDetails] File '${filename}' deleted`);
+    if (onFileDeleted) {
+      onFileDeleted(deletedFileId, filename);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
       {/* Header */}
@@ -78,15 +101,24 @@ export default function FileDetails({ repoId, fileId, onVersionUpload }) {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowUploadForm(!showUploadForm)}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Version
-          </button>
+          <div className="flex items-center gap-2">
+            <DeleteFileButton
+              repoId={repoId}
+              fileId={fileId}
+              filename={file?.filename}
+              branch={branch}
+              onDeleted={handleFileDeleted}
+            />
+            <button
+              onClick={() => setShowUploadForm(!showUploadForm)}
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded text-xs font-medium transition flex items-center gap-1.5 shadow-sm"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Version
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -129,6 +161,7 @@ export default function FileDetails({ repoId, fileId, onVersionUpload }) {
         <UploadVersionForm
           repoId={repoId}
           fileId={fileId}
+          branch={branch}
           onSuccess={handleVersionUploadSuccess}
           onCancel={() => setShowUploadForm(false)}
         />
@@ -148,6 +181,7 @@ export default function FileDetails({ repoId, fileId, onVersionUpload }) {
             filename={file?.filename}
             versions={versions}
             onRefresh={refetch}
+            branch={branch}
           />
         )}
       </div>
