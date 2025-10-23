@@ -301,10 +301,10 @@ We welcome contributions! Here's how you can help:
 ## 🗺️ Roadmap
 
 - [ ] Multi-user collaboration
-- [ ] Branch support
-- [ ] Merge functionality
-- [ ] Conflict resolution
-- [ ] File annotations
+- [X] Branch support
+- [X] Merge functionality
+- [X] Conflict resolution
+- [X] File annotations
 - [ ] Advanced search
 - [ ] Activity timeline
 - [ ] Email notifications
