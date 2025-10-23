@@ -103,25 +103,33 @@ export default function BranchSelector({ repoId, currentBranch, onChange, refres
   return (
     <div className="inline-flex items-center gap-2">
       <label className="sr-only">Branch</label>
-      <select
-        value={
-          // Only show currentBranch if it exists in branches list
-          branches.some(b => b.name === currentBranch) ? currentBranch : 
-          branches.find(b => b.is_default)?.name || 
-          branches[0]?.name || 
-          ''
-        }
-        onChange={(e) => onChange && onChange(e.target.value)}
-        className="px-2 py-1 text-sm border rounded-md bg-white dark:bg-zinc-800"
-        disabled={loading}
-      >
-        {branches.map((b) => (
-          <option key={b.id} value={b.name}>
-            {b.name} {b.is_default ? '(default)' : ''}
-          </option>
-        ))}
-        {branches.length === 0 && !loading && <option value="">main</option>}
-      </select>
+      <div className="relative min-w-[140px]">
+        <select
+          value={
+            // Only show currentBranch if it exists in branches list
+            branches.some(b => b.name === currentBranch) ? currentBranch : 
+            branches.find(b => b.is_default)?.name || 
+            branches[0]?.name || 
+            ''
+          }
+          onChange={(e) => onChange && onChange(e.target.value)}
+          className="w-full pl-9 pr-9 py-2 text-sm font-medium border-2 border-zinc-600/30 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed truncate"
+          disabled={loading}
+        >
+          {branches.map((b) => (
+            <option key={b.id} value={b.name}>
+              {b.name} {b.is_default ? '(default)' : ''}
+            </option>
+          ))}
+          {branches.length === 0 && !loading && <option value="">main</option>}
+        </select>
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 dark:text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+        </svg>
+        <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
       
       {currentBranch && (
         <DeleteBranchButton

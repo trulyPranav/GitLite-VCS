@@ -50,7 +50,7 @@ export default function BranchFlowIndicator({ currentBranch, isDefault }) {
         
         {/* Tooltip */}
         {showTooltip && (
-          <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg shadow-xl z-50 border border-zinc-700">
+          <div className="absolute top-full right-0 mt-2 w-64 p-3 bg-zinc-900 dark:bg-zinc-800 text-white text-xs rounded-lg shadow-xl z-50 border border-zinc-700">
             <div className="space-y-2">
               <p className="font-semibold text-indigo-300">Current Branch</p>
               <p className="text-zinc-300">
@@ -62,9 +62,9 @@ export default function BranchFlowIndicator({ currentBranch, isDefault }) {
                 </p>
               </div>
             </div>
-            {/* Arrow pointing down */}
-            <div className="absolute top-full right-4 -mt-1">
-              <div className="border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-800"></div>
+            {/* Arrow pointing up */}
+            <div className="absolute bottom-full right-4 -mb-1">
+              <div className="border-4 border-transparent border-b-zinc-900 dark:border-b-zinc-800"></div>
             </div>
           </div>
         )}
