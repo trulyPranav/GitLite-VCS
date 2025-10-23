@@ -277,8 +277,11 @@ export default function LoginPage() {
                 <svg className="w-12 h-12 text-green-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-sm font-medium text-green-300">
-                  Reset link sent! Check your email.
+                <p className="text-sm font-medium text-green-300 mb-2">
+                  Reset link sent!
+                </p>
+                <p className="text-xs text-green-400/80">
+                  Check your email for the password reset link
                 </p>
               </div>
             ) : (
