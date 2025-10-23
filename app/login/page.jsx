@@ -226,18 +226,28 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setResetSuccess(false);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setResetSuccess(true);
+      // Call the resetPassword API with the email
+      const response = await authAPI.resetPassword(resetEmail);
       
-      setTimeout(() => {
-        setShowForgotPassword(false);
-        setResetSuccess(false);
-        setResetEmail('');
-      }, 3000);
+      // Only show success if we get a successful response
+      if (response) {
+        setResetSuccess(true);
+        
+        // Auto-close after 3 seconds and reset state
+        setTimeout(() => {
+          setShowForgotPassword(false);
+          setResetSuccess(false);
+          setResetEmail('');
+          setError('');
+        }, 3000);
+      }
     } catch (err) {
-      setError('Failed to send reset email. Please try again.');
+      console.error('Password reset error:', err);
+      setError(err.message || 'Failed to send reset email. Please try again.');
+      setResetSuccess(false);
     } finally {
       setIsLoading(false);
     }
