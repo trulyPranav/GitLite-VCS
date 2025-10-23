@@ -8,6 +8,7 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [accessToken, setAccessToken] = useState('');
+  const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,13 @@ function ResetPasswordForm() {
     setError('');
     setIsLoading(true);
 
+    // Validate email
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      setIsLoading(false);
+      return;
+    }
+
     // Validate passwords match
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
@@ -44,8 +52,8 @@ function ResetPasswordForm() {
     }
 
     try {
-      // Call the update password API
-      await authAPI.updatePassword(accessToken, newPassword);
+      // Call the update password API with email, token, and new password
+      await authAPI.updatePassword(email, accessToken, newPassword);
       setSuccess(true);
 
       // Redirect to login after 3 seconds
@@ -123,6 +131,24 @@ function ResetPasswordForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-2">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-600 rounded-xl bg-slate-700 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Enter your email"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Enter the email address you used for password reset
+                </p>
+              </div>
+
+              <div>
                 <label htmlFor="newPassword" className="block text-sm font-semibold text-slate-300 mb-2">
                   New Password
                 </label>
@@ -170,7 +196,7 @@ function ResetPasswordForm() {
 
               <button
                 type="submit"
-                disabled={isLoading || !newPassword || !confirmPassword}
+                disabled={isLoading || !email || !newPassword || !confirmPassword}
                 className="w-full py-3 px-4 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
               >
                 {isLoading ? (
