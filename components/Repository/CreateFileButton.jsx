@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useFiles } from '@/lib/hooks';
 
-export default function CreateFileButton({ repoId }) {
+export default function CreateFileButton({ repoId, branch = null }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState('text'); // 'text' or 'file'
   const [filename, setFilename] = useState('');
@@ -11,7 +11,7 @@ export default function CreateFileButton({ repoId }) {
   const [commitMessage, setCommitMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState('');
-  const { createFile, uploadFile, loading } = useFiles(repoId);
+  const { createFile, uploadFile, loading } = useFiles(repoId, branch);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -31,7 +31,7 @@ export default function CreateFileButton({ repoId }) {
     }
 
     try {
-      if (uploadMode === 'file') {
+  if (uploadMode === 'file') {
         // Binary file upload
         if (!selectedFile) {
           setError('Please select a file to upload');

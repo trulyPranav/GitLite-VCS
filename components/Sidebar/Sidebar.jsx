@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRepositories, useFiles } from '@/lib/hooks';
 import CreateRepoButton from './CreateRepoButton';
+import DeleteRepoButton from './DeleteRepoButton';
 
-export default function Sidebar({ selectedRepoId, onSelectRepo, selectedFileId, onSelectFile, isOpen, onClose }) {
+export default function Sidebar({ selectedRepoId, onSelectRepo, selectedFileId, onSelectFile, isOpen, onClose, branch = null, onRepoDeleted }) {
   const { repositories, loading: isLoading, error } = useRepositories();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRepos, setExpandedRepos] = useState(new Set([selectedRepoId]));
@@ -23,6 +24,13 @@ export default function Sidebar({ selectedRepoId, onSelectRepo, selectedFileId, 
     onSelectRepo(repoId);
     toggleRepoExpand(repoId);
     onClose?.();
+  };
+
+  const handleRepoDeleted = (deletedRepoId, repoName) => {
+    console.log(`[Sidebar] Repository '${repoName}' deleted`);
+    if (onRepoDeleted) {
+      onRepoDeleted(deletedRepoId, repoName);
+    }
   };
 
   const filteredRepos = repositories.filter(repo =>
@@ -108,6 +116,8 @@ export default function Sidebar({ selectedRepoId, onSelectRepo, selectedFileId, 
                   onToggleExpand={toggleRepoExpand}
                   selectedFileId={selectedFileId}
                   onSelectFile={onSelectFile}
+                  branch={selectedRepoId === repo.id ? branch : null}
+                  onRepoDeleted={handleRepoDeleted}
                 />
               ))}
             </div>
@@ -119,11 +129,16 @@ export default function Sidebar({ selectedRepoId, onSelectRepo, selectedFileId, 
 }
 
 // Repository Tree Item Component
-function RepoTreeItem({ repo, isSelected, isExpanded, onRepoClick, onToggleExpand, selectedFileId, onSelectFile }) {
-  const { files, loading } = useFiles(repo.id);
+function RepoTreeItem({ repo, isSelected, isExpanded, onRepoClick, onToggleExpand, selectedFileId, onSelectFile, branch = null, onRepoDeleted }) {
+  const { files, loading } = useFiles(repo.id, branch);
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
 
   return (
-    <div className="select-none">
+    <div 
+      className="select-none"
+      onMouseEnter={() => setShowDeleteButton(true)}
+      onMouseLeave={() => setShowDeleteButton(false)}
+    >
       {/* Repository Item */}
       <div
         className={`group flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 cursor-pointer transition ${
@@ -169,12 +184,24 @@ function RepoTreeItem({ repo, isSelected, isExpanded, onRepoClick, onToggleExpan
         </svg>
 
         {/* Repository Name */}
-        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate">
+        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate flex-1">
           {repo.name}
         </span>
 
+        {/* Delete Button (on hover) */}
+        {showDeleteButton && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <DeleteRepoButton
+              repoId={repo.id}
+              repoName={repo.name}
+              onDeleted={onRepoDeleted}
+              compact={true}
+            />
+          </div>
+        )}
+
         {/* File Count Badge */}
-        {files.length > 0 && (
+        {files.length > 0 && !showDeleteButton && (
           <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">
             {files.length}
           </span>

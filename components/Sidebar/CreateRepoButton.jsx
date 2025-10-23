@@ -124,6 +124,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRepositories } from '@/lib/hooks';
+import { branchesAPI } from '@/lib/apiClient';
 
 export default function CreateRepoButton() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,10 +148,19 @@ export default function CreateRepoButton() {
     }
 
     try {
-      await createRepository({
+      // Create repository
+      const newRepo = await createRepository({
         name: name.trim(),
         description: description.trim() || undefined,
       });
+      
+      // Automatically create "main" branch for the new repository
+      try {
+        await branchesAPI.create(newRepo.id, 'main', null);
+      } catch (branchErr) {
+        console.error('Failed to create main branch:', branchErr);
+        // Don't throw - repo was created successfully
+      }
       
       // Reset and close
       setName('');
@@ -165,7 +175,7 @@ export default function CreateRepoButton() {
   };
 
   const modal = isModalOpen ? (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[9999]">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-9999">
       <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 w-full max-w-md shadow-2xl mx-4">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Create New Repository</h2>
         
